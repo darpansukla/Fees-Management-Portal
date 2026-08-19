@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fees Management System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & JetBrains Mono for Receipt Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- QRCode Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: #f5f5f7;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .receipt-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .liquid-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.03);
+        }
+        .liquid-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(229, 229, 234, 0.6);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="text-slate-900 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- APP CONTAINER -->
+    <div class="max-w-md w-full mx-auto p-3 sm:p-5 flex-grow flex flex-col justify-between space-y-4">
+
+        <!-- HEADER -->
+        <header class="liquid-header rounded-3xl p-3.5 shadow-sm flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xs border border-indigo-100 shadow-inner">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <h1 class="text-xs font-black tracking-tight text-slate-900 uppercase">Fees Management</h1>
+                    <p class="text-[9px] text-slate-400 font-medium">Student Portal System</p>
+                </div>
+            </div>
+            <div class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full text-[9px] font-bold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Active
+            </div>
+        </header>
+
+        <!-- LOADER SCREEN -->
+        <div id="screenLoader" class="liquid-card rounded-3xl p-8 flex flex-col items-center justify-center space-y-4 my-auto">
+            <div class="animate-spin rounded-full h-10 w-10 border-2 border-indigo-200 border-t-indigo-600"></div>
+            <p class="text-slate-500 text-xs font-semibold tracking-wide animate-pulse">Loading Portal...</p>
+        </div>
+
+        <!-- ERROR SCREEN -->
+        <div id="screenError" class="hidden liquid-card rounded-3xl p-8 text-center space-y-4 my-auto">
+            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl mx-auto border border-rose-100">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="space-y-1">
+                <h2 class="text-sm font-black text-slate-900">Connection Failed</h2>
+                <p class="text-xs text-slate-400">Could not retrieve records from Google Sheets.</p>
+            </div>
+            <button onclick="fetchAllData()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98]">
+                Retry Connection
+            </button>
+        </div>
+
+        <!-- SCREEN 1: TYPE STUDENT NAME (3 LETTERS MINIMUM) -->
+        <div id="screenStudentSelect" class="hidden liquid-card rounded-3xl p-6 space-y-5 animate-fade-in my-auto">
+            <div class="space-y-1 text-center">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-lg mx-auto mb-3 shadow-inner">
+                    <i class="fa-solid fa-user-pen"></i>
+                </div>
+                <h2 class="text-sm font-black tracking-tight text-slate-900">Find Your Name</h2>
+                <p class="text-[11px] text-slate-400">Type at least 3 letters of your name to view suggestions.</p>
+            </div>
+
+            <div class="space-y-4 relative">
+                <div class="space-y-1.5">
+                    <label for="studentNameInput" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">Student Name</label>
+                    <div class="relative">
+                        <input type="text" id="studentNameInput" placeholder="Type at least 3 letters..." oninput="handleNameInput(this.value)" autocomplete="off" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400 text-xs">
+                            <i class="fa-solid fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auto-suggest Dropdown List Box -->
+                <div id="suggestionsBox" class="hidden absolute left-0 right-0 top-[74px] bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-50 p-1 divide-y divide-slate-100">
+                    <!-- Dynamic Suggestions Appear Here -->
+                </div>
+
+                <p id="loginErrorMsg" class="text-[10px] text-rose-600 font-bold hidden text-center">Please select a valid name from the list.</p>
+            </div>
+
+            <button onclick="confirmStudentSelection()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                Continue <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+        </div>
+
+        <!-- SCREEN 2: STUDENT DETAILS & PENDING DUES -->
+        <div id="screenStudentDetails" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
+            <div class="space-y-3">
+                <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
+                    <div>
+                        <p class="text-[9px] text-slate-400 font-medium">Student Name:</p>
+                        <p class="font-bold text-slate-800 text-[11px] truncate max-w-[210px]" id="displayStudentName">-</p>
+                    </div>
+                    <button onclick="logoutStudent()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-xl font-bold text-[10px] transition-all">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Change Name
+                    </button>
+                </div>
+
+                <!-- Info Cards Grid -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="liquid-card rounded-2xl p-3 space-y-1">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Class</p>
+                        <p class="text-xs font-black text-slate-800 truncate" id="displayClass">-</p>
+                    </div>
+                    <div class="liquid-card rounded-2xl p-3 space-y-1">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">School</p>
+                        <p class="text-xs font-black text-slate-800 truncate" id="displaySchool">-</p>
+                    </div>
+                </div>
+
+                <!-- Financial Summary Box -->
+                <div class="liquid-card rounded-2xl p-4 bg-gradient-to-br from-indigo-50/50 to-white space-y-2 border border-indigo-100">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-500 font-medium">Monthly Fee:</span>
+                        <span class="font-bold text-slate-800" id="displayMonthlyFee">₹0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-500 font-medium">Pending Months (Mandatory):</span>
+                        <span class="font-bold text-indigo-600" id="displayPendingMonthsCount">0 Months</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/60 flex justify-between items-center">
+                        <span class="text-xs font-black text-slate-900 uppercase">Total Due Amount:</span>
+                        <span class="text-sm font-black text-rose-600" id="displayTotalDueAmount">₹0</span>
+                    </div>
+                </div>
+
+                <!-- Pending Months List Container -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center px-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Dues & Payment Records</span>
+                    </div>
+                    <div id="monthsContainer" class="liquid-card rounded-2xl p-3 space-y-2 max-h-[30vh] overflow-y-auto border border-slate-200/60">
+                        <!-- Dynamic Month Badges with Payment Dates -->
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="proceedToPayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                Proceed to Pay <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+        </div>
+
+        <!-- SCREEN 3: PAYMENT GATEWAY & QR -->
+        <div id="screenPayment" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
+            <div class="space-y-3">
+                <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
+                    <div>
+                        <p class="text-[9px] text-slate-400 font-medium">Payment Gateway:</p>
+                        <p class="font-bold text-slate-800 text-[11px]" id="paymentStudentSummary">-</p>
+                    </div>
+                    <button onclick="backToDetails()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-xl font-bold text-[10px] transition-all">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Back
+                    </button>
+                </div>
+
+                <!-- Dynamic QR Box -->
+                <div class="liquid-card rounded-3xl p-5 text-center space-y-3">
+                    <div class="space-y-0.5">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Scan & Pay Exact Amount</p>
+                        <p class="text-xl font-black text-indigo-600" id="qrDisplayAmount">₹0</p>
+                    </div>
+                    
+                    <div class="bg-white p-3.5 rounded-2xl inline-block shadow-sm border border-slate-100 mx-auto">
+                        <div id="qrcode" class="flex justify-center items-center"></div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-[10px] text-slate-600">
+                        <p class="font-bold">UPI ID: <span class="text-indigo-600">sdarpan128@oksbi</span></p>
+                        <p class="text-[9px] text-slate-400 mt-0.5">Remark: <span id="displayRemarkText" class="font-medium text-slate-700"></span></p>
+                    </div>
+                </div>
+
+                <!-- Direct App Payment Buttons -->
+                <div class="grid grid-cols-3 gap-2">
+                    <a id="gpayLink" href="#" class="liquid-card hover:bg-slate-50 p-3 rounded-2xl text-center space-y-1 block border border-slate-200/60 transition-all active:scale-95">
+                        <div class="w-8 h-8 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xs mx-auto"><i class="fa-brands fa-google"></i></div>
+                        <p class="text-[10px] font-bold text-slate-800">GPay</p>
+                    </a>
+                    <a id="phonepeLink" href="#" class="liquid-card hover:bg-slate-50 p-3 rounded-2xl text-center space-y-1 block border border-slate-200/60 transition-all active:scale-95">
+                        <div class="w-8 h-8 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xs mx-auto"><i class="fa-solid fa-p"></i></div>
+                        <p class="text-[10px] font-bold text-slate-800">PhonePe</p>
+                    </a>
+                    <a id="paytmLink" href="#" class="liquid-card hover:bg-slate-50 p-3 rounded-2xl text-center space-y-1 block border border-slate-200/60 transition-all active:scale-95">
+                        <div class="w-8 h-8 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-xs mx-auto"><i class="fa-solid fa-wallet"></i></div>
+                        <p class="text-[10px] font-bold text-slate-800">Paytm</p>
+                    </a>
+                </div>
+            </div>
+
+            <button onclick="proceedToUpload()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                I Have Paid (Upload Screenshot) <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+        </div>
+
+        <!-- SCREEN 4: SCREENSHOT UPLOAD & SUBMISSION -->
+        <div id="screenUpload" class="hidden liquid-card rounded-3xl p-5 space-y-4 animate-fade-in my-auto">
+            <div class="space-y-1">
+                <h2 class="text-sm font-black tracking-tight text-slate-900">Upload Payment Proof</h2>
+                <p class="text-[11px] text-slate-400">Attach payment screenshot to generate and download receipt automatically.</p>
+            </div>
+
+            <div class="space-y-3">
+                <div class="space-y-1.5">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">Payment Screenshot <span class="text-rose-500">*</span></label>
+                    <label class="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer bg-slate-50/50 transition-all">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-sm mb-2 shadow-inner">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700" id="uploadFileName">Browse or capture screenshot</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">PNG, JPG up to 10MB</span>
+                        <input type="file" id="screenshotInput" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
+                    </label>
+                    <p id="uploadErrorMsg" class="text-[10px] text-rose-600 font-bold hidden text-center mt-1">Please upload your payment screenshot before submitting.</p>
+                </div>
+            </div>
+
+            <button onclick="submitPaymentData()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check"></i> Submit & Download Receipt Image
+            </button>
+            <button onclick="backToPayment()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-6 rounded-2xl text-xs transition-all">
+                Cancel
+            </button>
+        </div>
+
+        <!-- SCREEN 5: RECEIPT SUCCESS -->
+        <div id="screenReceipt" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
+            <div class="space-y-3">
+                <div class="liquid-card rounded-3xl p-5 text-center space-y-2 border border-emerald-100 bg-gradient-to-br from-emerald-50/30 to-white">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mx-auto shadow-inner">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="space-y-0.5">
+                        <h2 class="text-sm font-black text-slate-900">Payment Successful!</h2>
+                        <p class="text-[10px] text-slate-400">Receipt image downloaded in exact receipt format.</p>
+                    </div>
+                </div>
+
+                <!-- Receipt Ticket Preview (Styled exact to image) -->
+                <div class="liquid-card rounded-2xl p-4 text-[11px] border border-slate-300 bg-white receipt-font space-y-3 text-slate-800">
+                    <div class="text-center space-y-0.5">
+                        <h3 class="font-bold text-xs tracking-wider">SOUTH POINT VISUAL &amp;<br>PERFORMING ARTS SCHOOL</h3>
+                        <p class="text-[9px] text-slate-500">Guwahati-18</p>
+                        <div class="inline-block border border-dashed border-slate-400 px-3 py-1 my-1 text-[10px] font-bold tracking-widest">
+                            FEE RECEIPT
+                        </div>
+                        <p class="text-[10px] font-bold">Session: 2026-27</p>
+                    </div>
+
+                    <div class="border-t border-dashed border-slate-300 pt-2 space-y-1 text-[10px]">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Sub</span>
+                            <span class="font-bold text-right">PUTHICHITRA SCHOOL OF FINE ARTS &amp;</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Center:</span>
+                            <span class="font-bold">CRAFTS, GUWAHATI</span>
+                        </div>
+                        <div class="flex justify-between pt-1">
+                            <span class="text-slate-500">Date:</span>
+                            <span class="font-bold" id="recDate">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Receipt No:</span>
+                            <span class="font-bold" id="recReceiptNo">-</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-dashed border-slate-300 pt-2 space-y-1">
+                        <div class="font-bold text-slate-900" id="recStudentHeader">-</div>
+                        <div class="flex justify-between text-[10px]">
+                            <span class="text-slate-500">Months:</span>
+                            <span class="font-bold text-rose-600" id="recMonths">-</span>
+                        </div>
+                        <div class="flex justify-between text-[10px]">
+                            <span class="text-slate-500">Mode:</span>
+                            <span class="font-bold">UPI</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] pt-1">
+                            <span class="text-slate-500" id="recItemDesc">Tuition Fee:</span>
+                            <span class="font-bold" id="recItemAmount">-</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] border-b border-dashed border-slate-300 pb-1">
+                            <span class="text-slate-500">Sub-total:</span>
+                            <span class="font-bold" id="recSubtotal">-</span>
+                        </div>
+                    </div>
+
+                    <div class="border-b-2 border-slate-800 pb-2 pt-1 flex justify-between items-center">
+                        <span class="font-black text-xs uppercase">TOTAL PAID:</span>
+                        <span class="font-black text-sm" id="recAmount">-</span>
+                    </div>
+
+                    <div class="text-center italic text-[10px] text-slate-600" id="recAmountWords">
+                        -
+                    </div>
+
+                    <div class="border-t border-dashed border-slate-300 pt-2 text-center space-y-1.5">
+                        <p class="font-bold text-[10px]">THANK YOU</p>
+                        <p class="text-[9px] text-slate-500">Please keep this for your records.</p>
+                        <div id="receiptBarcodeContainer" class="flex flex-col items-center justify-center pt-1">
+                            <!-- Barcode rendered via canvas -->
+                            <canvas id="barcodeCanvas" class="h-8 max-w-[180px]"></canvas>
+                            <span class="text-[8px] tracking-widest mt-0.5" id="recBarcodeText">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="downloadReceiptImage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Download Receipt Image Again
+                </button>
+                <button onclick="logoutStudent()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-6 rounded-2xl text-xs transition-all">
+                    Search Another Name
+                </button>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="liquid-header rounded-2xl py-2.5 px-4 text-center text-[10px] text-slate-400 shadow-sm">
+            Made by Darpan Sukla
+        </footer>
+
+    </div>
+
+    <!-- APPLICATION SCRIPT -->
+    <script>
+        const SHEET1_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTX48BAsrQETF3c1Nr0RGHFApqykm3S46TVemkcULpRlCcAULOVJNR3g_f-VoK4qDCAdbpmDPVU4vgy/pub?gid=0&single=true&output=csv";
+        const SHEET2_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTX48BAsrQETF3c1Nr0RGHFApqykm3S46TVemkcULpRlCcAULOVJNR3g_f-VoK4qDCAdbpmDPVU4vgy/pub?gid=1175661573&single=true&output=csv";
+        const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzBaUipbK3tFV1ZN6mIR7LTtQ9t3_u35W_x1-INB_IuwV01_KU9M5VtrmjhV_K07GXX/exec";
+
+        const SESSION_MONTHS = [
+            { name: "April", year: 2026 },
+            { name: "May", year: 2026 },
+            { name: "June", year: 2026 },
+            { name: "July", year: 2026 },
+            { name: "August", year: 2026 },
+            { name: "September", year: 2026 },
+            { name: "October", year: 2026 },
+            { name: "November", year: 2026 },
+            { name: "December", year: 2026 },
+            { name: "January", year: 2027 },
+            { name: "February", year: 2027 },
+            { name: "March", year: 2027 }
+        ];
+
+        let studentsDataMap = {}; 
+        let submittedRecordsList = []; 
+        let selectedStudentObj = null;
+        let activeSelectedMonths = [];
+        let calculatedTotalDue = 0;
+        let uploadedFile = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchAllData();
+        });
+
+        async function fetchAllData() {
+            showScreen('screenLoader');
+            try {
+                const res1 = await fetch(SHEET1_CSV_URL);
+                const csv1 = await res1.text();
+                parseSheet1(csv1);
+
+                try {
+                    const res2 = await fetch(SHEET2_CSV_URL);
+                    const csv2 = await res2.text();
+                    parseSheet2(csv2);
+                } catch (e2) {
+                    submittedRecordsList = [];
+                }
+
+                showScreen('screenStudentSelect');
+            } catch (err) {
+                console.error("Error syncing Google Sheets:", err);
+                showScreen('screenError');
+            }
+        }
+
+        function parseCSVText(text) {
+            let lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length <= 1) return [];
+            let rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                let row = [];
+                let inQuotes = false;
+                let currentVal = '';
+                for (let char of lines[i]) {
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        row.push(currentVal.replace(/^"|"$/g, '').trim());
+                        currentVal = '';
+                    } else {
+                        currentVal += char;
+                    }
+                }
+                row.push(currentVal.replace(/^"|"$/g, '').trim());
+                rows.push(row);
+            }
+            return rows;
+        }
+
+        function parseSheet1(text) {
+            let rows = parseCSVText(text);
+            studentsDataMap = {};
+            rows.forEach(r => {
+                let sName = r[1] || "";
+                let sClass = r[2] || "";
+                let sSchool = r[3] || "";
+                let monthlyFee = parseFloat(r[4]) || 0;
+                let joiningMonth = r[5] || "April 2026";
+
+                if (sName) {
+                    studentsDataMap[sName.toLowerCase()] = {
+                        name: sName,
+                        class: sClass || 'N/A',
+                        school: sSchool || 'N/A',
+                        monthlyFee: monthlyFee,
+                        joiningMonth: joiningMonth
+                    };
+                }
+            });
+        }
+
+        function parseSheet2(text) {
+            let rows = parseCSVText(text);
+            submittedRecordsList = [];
+            rows.forEach(r => {
+                submittedRecordsList.push({
+                    receiptNo: r[0] || "",
+                    timestamp: r[1] || "",
+                    studentName: r[2] || "",
+                    class: r[3] || "",
+                    school: r[4] || "",
+                    months: r[5] || "",
+                    amount: r[6] || ""
+                });
+            });
+        }
+
+        function showScreen(screenId) {
+            ['screenLoader', 'screenError', 'screenStudentSelect', 'screenStudentDetails', 'screenPayment', 'screenUpload', 'screenReceipt'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function handleNameInput(query) {
+            let box = document.getElementById('suggestionsBox');
+            let errorMsg = document.getElementById('loginErrorMsg');
+            errorMsg.classList.add('hidden');
+            
+            let trimmedQuery = query.trim().toLowerCase();
+            
+            if (trimmedQuery.length < 3) {
+                box.innerHTML = '';
+                box.classList.add('hidden');
+                selectedStudentObj = null;
+                return;
+            }
+
+            let allStudentNames = Object.values(studentsDataMap).map(s => s.name);
+            let matches = allStudentNames.filter(name => name.toLowerCase().includes(trimmedQuery));
+
+            if (matches.length === 0) {
+                box.innerHTML = `<div class="p-3 text-[11px] text-slate-400 text-center font-medium">No matching student found</div>`;
+                box.classList.remove('hidden');
+                selectedStudentObj = null;
+                return;
+            }
+
+            let html = '';
+            matches.forEach(matchName => {
+                html += `<div onclick="selectSuggestedName('${matchName.replace(/'/g, "\\'")}')" class="p-2.5 hover:bg-indigo-50 rounded-xl cursor-pointer text-xs font-semibold text-slate-800 transition-all">${matchName}</div>`;
+            });
+            box.innerHTML = html;
+            box.classList.remove('hidden');
+        }
+
+        function selectSuggestedName(name) {
+            document.getElementById('studentNameInput').value = name;
+            document.getElementById('suggestionsBox').classList.add('hidden');
+            selectedStudentObj = studentsDataMap[name.toLowerCase()] || null;
+            document.getElementById('loginErrorMsg').classList.add('hidden');
+        }
+
+        function confirmStudentSelection() {
+            let inputVal = document.getElementById('studentNameInput').value.trim();
+            let errorMsg = document.getElementById('loginErrorMsg');
+
+            if (!selectedStudentObj && inputVal) {
+                let lower = inputVal.toLowerCase();
+                if (studentsDataMap[lower]) {
+                    selectedStudentObj = studentsDataMap[lower];
+                }
+            }
+
+            if (!selectedStudentObj) {
+                errorMsg.innerText = "Please type at least 3 letters and select a valid name from the suggestions list.";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            errorMsg.classList.add('hidden');
+            document.getElementById('studentNameInput').value = '';
+            document.getElementById('suggestionsBox').classList.add('hidden');
+            loadStudentDetailsView();
+        }
+
+        function loadStudentDetailsView() {
+            let studentName = selectedStudentObj.name;
+            document.getElementById('displayStudentName').innerText = studentName;
+            document.getElementById('displayClass').innerText = selectedStudentObj.class;
+            document.getElementById('displaySchool').innerText = selectedStudentObj.school;
+            document.getElementById('displayMonthlyFee').innerText = `₹${selectedStudentObj.monthlyFee}`;
+
+            let paidMonthsMap = new Map();
+            submittedRecordsList.forEach(rec => {
+                if (rec.studentName.toLowerCase() === studentName.toLowerCase()) {
+                    let mList = rec.months.split(',').map(m => m.trim());
+                    let rawDateStr = rec.timestamp.trim();
+                    let dateOnly = rawDateStr.includes(' ') ? rawDateStr.split(' ')[0] : rawDateStr;
+                    mList.forEach(m => {
+                        if (dateOnly) {
+                            paidMonthsMap.set(m.toLowerCase(), dateOnly);
+                        }
+                    });
+                }
+            });
+
+            let currentDate = new Date(); 
+            let currentMonthIdx = currentDate.getMonth(); 
+            let currentYearNum = currentDate.getFullYear(); 
+
+            let container = document.getElementById('monthsContainer');
+            container.innerHTML = '';
+
+            activeSelectedMonths = [];
+
+            let joinStr = selectedStudentObj.joiningMonth.trim();
+            if (!joinStr.toLowerCase().includes('2026') && !joinStr.toLowerCase().includes('2027')) {
+                joinStr += " 2026";
+            }
+            let joiningDateCheck = new Date(`1 ${joinStr}`);
+
+            SESSION_MONTHS.forEach(mObj => {
+                let monthLabel = `${mObj.name} ${mObj.year}`;
+                let monthLookupKey = mObj.name.toLowerCase();
+
+                let mObjDateCheck = new Date(`${mObj.name} 1, ${mObj.year}`);
+                let isBeforeJoining = mObjDateCheck < new Date(joiningDateCheck.getFullYear(), joiningDateCheck.getMonth(), 1);
+                let isBeforeCurrentMonth = mObjDateCheck < new Date(currentYearNum, currentMonthIdx, 1);
+
+                if (isBeforeJoining || !isBeforeCurrentMonth) return;
+
+                let isPaid = paidMonthsMap.has(monthLookupKey) || paidMonthsMap.has(monthLabel.toLowerCase());
+                let paidDateStr = isPaid ? (paidMonthsMap.get(monthLookupKey) || paidMonthsMap.get(monthLabel.toLowerCase())) : "";
+
+                if (!isPaid) {
+                    activeSelectedMonths.push(mObj.name);
+                }
+
+                let div = document.createElement('div');
+                div.className = `flex items-center justify-between p-2.5 rounded-xl border ${isPaid ? 'bg-emerald-50/50 border-emerald-200 opacity-85' : 'bg-slate-50 border-slate-200'}`;
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-4 h-4 rounded flex items-center justify-center text-[10px] ${isPaid ? 'bg-emerald-500 text-white' : 'bg-indigo-600 text-white'}">
+                            <i class="fa-solid ${isPaid ? 'fa-check' : 'fa-lock'}"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-800">${monthLabel}</span>
+                            ${isPaid && paidDateStr ? `<p class="text-[9px] text-emerald-600 font-medium">Paid on: ${paidDateStr}</p>` : ''}
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-extrabold ${isPaid ? 'text-emerald-600' : 'text-indigo-600'}">${isPaid ? 'Paid' : '₹' + selectedStudentObj.monthlyFee}</span>
+                `;
+                container.appendChild(div);
+            });
+
+            calculatedTotalDue = activeSelectedMonths.length * selectedStudentObj.monthlyFee;
+            document.getElementById('displayPendingMonthsCount').innerText = `${activeSelectedMonths.length} Months`;
+            document.getElementById('displayTotalDueAmount').innerText = `₹${calculatedTotalDue}`;
+
+            showScreen('screenStudentDetails');
+        }
+
+        function logoutStudent() {
+            selectedStudentObj = null;
+            document.getElementById('studentNameInput').value = '';
+            showScreen('screenStudentSelect');
+        }
+
+        function proceedToPayment() {
+            if (calculatedTotalDue <= 0 || activeSelectedMonths.length === 0) {
+                alert("No pending dues found to pay!");
+                return;
+            }
+
+            let summaryStr = `${selectedStudentObj.name} (${activeSelectedMonths.length} Months)`;
+            document.getElementById('paymentStudentSummary').innerText = summaryStr;
+            document.getElementById('qrDisplayAmount').innerText = `₹${calculatedTotalDue}`;
+
+            let remark = `${selectedStudentObj.name} - ${activeSelectedMonths.join(', ')}`;
+            document.getElementById('displayRemarkText').innerText = remark;
+
+            let upiId = "sdarpan128@oksbi";
+            let payeeName = "Darpan Sukla";
+            let upiDeepLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${calculatedTotalDue}&cu=INR&tn=${encodeURIComponent(remark)}`;
+
+            document.getElementById('gpayLink').href = upiDeepLink;
+            document.getElementById('phonepeLink').href = upiDeepLink;
+            document.getElementById('paytmLink').href = upiDeepLink;
+
+            let qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: upiDeepLink,
+                width: 160,
+                height: 160,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            showScreen('screenPayment');
+        }
+
+        function backToDetails() {
+            showScreen('screenStudentDetails');
+        }
+
+        function proceedToUpload() {
+            uploadedFile = null;
+            document.getElementById('uploadFileName').innerText = "Browse or capture screenshot";
+            document.getElementById('uploadErrorMsg').classList.add('hidden');
+            showScreen('screenUpload');
+        }
+
+        function handleFileSelect(event) {
+            let file = event.target.files[0];
+            if (file) {
+                uploadedFile = file;
+                document.getElementById('uploadFileName').innerText = file.name;
+                document.getElementById('uploadErrorMsg').classList.add('hidden');
+            }
+        }
+
+        function backToPayment() {
+            showScreen('screenPayment');
+        }
+
+        function numberToWords(num) {
+            let a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+            let b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            if ((num = num.toString()).length > 9) return 'Overflow';
+            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+            if (!n) return;
+            let str = '';
+            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+            return str.trim() ? str.trim() + ' Rupees Only' : 'Zero Rupees Only';
+        }
+
+        function drawBarcode(canvasId, text) {
+            let canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            let ctx = canvas.getContext('2d');
+            canvas.width = 240;
+            canvas.height = 60;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "#000000";
+            let x = 20;
+            let barWidth = 2;
+            for (let i = 0; i < text.length; i++) {
+                let code = text.charCodeAt(i);
+                barWidth = (code % 2 === 0) ? 2 : 3;
+                ctx.fillRect(x, 10, barWidth, 40);
+                x += barWidth + 3;
+                ctx.fillRect(x, 10, 1, 40);
+                x += 3;
+            }
+            // Add extra standard bars for look
+            for (let i = 0; i < 25; i++) {
+                ctx.fillRect(x, 10, (i % 3 === 0) ? 2 : 1, 40);
+                x += 4;
+            }
+        }
+
+        async function submitPaymentData() {
+            if (!uploadedFile) {
+                document.getElementById('uploadErrorMsg').classList.remove('hidden');
+                return;
+            }
+
+            let receiptNo = "R" + Math.floor(100000 + Math.random() * 900000);
+            
+            let now = new Date();
+            let day = String(now.getDate()).padStart(2, '0');
+            let monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            let formattedDate = `${day} ${monthsShort[now.getMonth()]} ${now.getFullYear()}`;
+            let timestampFull = now.toLocaleString('en-GB');
+
+            document.getElementById('recReceiptNo').innerText = receiptNo;
+            document.getElementById('recDate').innerText = formattedDate;
+            
+            let studentHeaderStr = `${selectedStudentObj.name.toUpperCase()} (${selectedStudentObj.class.toUpperCase()})`;
+            document.getElementById('recStudentHeader').innerText = studentHeaderStr;
+            
+            let monthsStr = activeSelectedMonths.join(', ');
+            document.getElementById('recMonths').innerText = monthsStr;
+            
+            let moCount = activeSelectedMonths.length;
+            document.getElementById('recItemDesc').innerText = `Tuition (${moCount} Mo):`;
+            document.getElementById('recItemAmount').innerText = `₹${calculatedTotalDue}`;
+            document.getElementById('recSubtotal').innerText = `₹${calculatedTotalDue}`;
+            document.getElementById('recAmount').innerText = `₹${calculatedTotalDue}`;
+            document.getElementById('recAmountWords').innerText = numberToWords(calculatedTotalDue);
+            document.getElementById('recBarcodeText').innerText = receiptNo;
+
+            drawBarcode('barcodeCanvas', receiptNo);
+
+            downloadReceiptImage();
+
+            let payload = {
+                receiptNo: receiptNo,
+                timestamp: timestampFull,
+                studentName: selectedStudentObj.name,
+                class: selectedStudentObj.class,
+                school: selectedStudentObj.school,
+                months: monthsStr,
+                amount: calculatedTotalDue
+            };
+
+            try {
+                await fetch(APPS_SCRIPT_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Error saving data to Sheet2:", err);
+            }
+
+            submittedRecordsList.push({
+                receiptNo: receiptNo,
+                timestamp: new Date().toISOString(),
+                studentName: selectedStudentObj.name,
+                class: selectedStudentObj.class,
+                school: selectedStudentObj.school,
+                months: monthsStr,
+                amount: calculatedTotalDue
+            });
+
+            showScreen('screenReceipt');
+        }
+
+        function downloadReceiptImage() {
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            
+            canvas.width = 600;
+            canvas.height = 750;
+
+            // Background
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let recNo = document.getElementById('recReceiptNo').innerText;
+            let date = document.getElementById('recDate').innerText;
+            let studentHeader = document.getElementById('recStudentHeader').innerText;
+            let months = document.getElementById('recMonths').innerText;
+            let itemDesc = document.getElementById('recItemDesc').innerText;
+            let amount = document.getElementById('recAmount').innerText;
+            let amountWords = document.getElementById('recAmountWords').innerText;
+
+            ctx.fillStyle = "#000000";
+            ctx.textAlign = "center";
+            
+            // Header
+            ctx.font = "bold 20px 'Courier New', monospace";
+            ctx.fillText("SOUTH POINT VISUAL &", canvas.width / 2, 45);
+            ctx.fillText("PERFORMING ARTS SCHOOL", canvas.width / 2, 70);
+            
+            ctx.font = "14px 'Courier New', monospace";
+            ctx.fillText("Guwahati-18", canvas.width / 2, 98);
+
+            // Boxed Title
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(180, 118, 240, 32);
+            ctx.font = "bold 14px 'Courier New', monospace";
+            ctx.fillText("FEE RECEIPT", canvas.width / 2, 139);
+
+            ctx.font = "bold 14px 'Courier New', monospace";
+            ctx.fillText("Session: 2026-27", canvas.width / 2, 180);
+
+            // Dashed Divider 1
+            drawDashedLine(ctx, 40, 205, 560, 205);
+
+            ctx.textAlign = "left";
+            ctx.font = "13px 'Courier New', monospace";
+            ctx.fillText("Sub", 40, 232);
+            ctx.fillText("PUTHICHITRA SCHOOL OF FINE ARTS &", 150, 232);
+            ctx.fillText("Center:", 40, 255);
+            ctx.fillText("CRAFTS, GUWAHATI", 150, 255);
+
+            ctx.fillText("Date:", 40, 290);
+            ctx.fillText(date, 460, 290);
+            ctx.fillText("Receipt No:", 40, 315);
+            ctx.fillText(recNo, 460, 315);
+
+            drawDashedLine(ctx, 40, 335, 560, 335);
+
+            ctx.font = "bold 14px 'Courier New', monospace";
+            ctx.fillText(studentHeader, 40, 368);
+
+            ctx.font = "13px 'Courier New', monospace";
+            ctx.fillText("Months:", 40, 398);
+            ctx.fillStyle = "#dc2626";
+            ctx.fillText(months, 440, 398);
+
+            ctx.fillStyle = "#000000";
+            ctx.fillText("Mode:", 40, 423);
+            ctx.fillText("UPI", 515, 423);
+
+            ctx.fillText(itemDesc, 40, 458);
+            ctx.fillText(amount, 490, 458);
+
+            drawDashedLine(ctx, 40, 478, 560, 478);
+
+            ctx.fillText("Sub-total:", 40, 503);
+            ctx.fillText(amount, 490, 503);
+
+            drawDashedLine(ctx, 40, 520, 560, 520);
+
+            // Total Paid Box
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(40, 535);
+            ctx.lineTo(560, 535);
+            ctx.stroke();
+
+            ctx.font = "bold 16px 'Courier New', monospace";
+            ctx.fillText("TOTAL PAID:", 40, 565);
+            ctx.fillText(amount, 470, 565);
+
+            ctx.font = "italic 13px 'Courier New', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(amountWords, canvas.width / 2, 595);
+
+            drawDashedLine(ctx, 40, 615, 560, 615);
+
+            ctx.font = "bold 13px 'Courier New', monospace";
+            ctx.fillText("THANK YOU", canvas.width / 2, 642);
+            ctx.font = "12px 'Courier New', monospace";
+            ctx.fillText("Please keep this for your records.", canvas.width / 2, 663);
+
+            // Draw Barcode on Canvas
+            ctx.fillStyle = "#000000";
+            let bx = 210;
+            for (let i = 0; i < recNo.length; i++) {
+                let code = recNo.charCodeAt(i);
+                let w = (code % 2 === 0) ? 2 : 3;
+                ctx.fillRect(bx, 680, w, 35);
+                bx += w + 3;
+                ctx.fillRect(bx, 680, 1, 35);
+                bx += 3;
+            }
+            for (let i = 0; i < 20; i++) {
+                ctx.fillRect(bx, 680, (i % 2 === 0) ? 2 : 1, 35);
+                bx += 4;
+            }
+
+            ctx.font = "9px 'Courier New', monospace";
+            ctx.fillText(recNo, canvas.width / 2, 730);
+
+            let link = document.createElement('a');
+            link.download = `Fee_Receipt_${recNo}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function drawDashedLine(ctx, x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = "#94a3b8";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    </script>
+</body>
+</html>
