@@ -65,7 +65,7 @@
         <!-- LOADER SCREEN -->
         <div id="screenLoader" class="liquid-card rounded-3xl p-8 flex flex-col items-center justify-center space-y-4 my-auto">
             <div class="animate-spin rounded-full h-10 w-10 border-2 border-indigo-200 border-t-indigo-600"></div>
-            <p class="text-slate-500 text-xs font-semibold tracking-wide animate-pulse">Loading Portal...</p>
+            <p id="loaderText" class="text-slate-500 text-xs font-semibold tracking-wide animate-pulse">Loading Portal...</p>
         </div>
 
         <!-- ERROR SCREEN -->
@@ -271,8 +271,8 @@
                 <!-- Receipt Ticket Preview (Styled exact to image) -->
                 <div class="liquid-card rounded-2xl p-4 text-[11px] border border-slate-300 bg-white receipt-font space-y-3 text-slate-800">
                     <div class="text-center space-y-0.5">
-                        <h3 class="font-bold text-xs tracking-wider">SOUTH POINT VISUAL &amp;<br>PERFORMING ARTS SCHOOL</h3>
-                        <p class="text-[9px] text-slate-500">Guwahati-18</p>
+                        <h3 class="font-bold text-xs tracking-wider">PUTHICHITRA SCHOOL OF FINE ARTS &amp;<br>CRAFTS</h3>
+                        <p class="text-[9px] text-slate-500">Guwahati</p>
                         <div class="inline-block border border-dashed border-slate-400 px-3 py-1 my-1 text-[10px] font-bold tracking-widest">
                             FEE RECEIPT
                         </div>
@@ -389,6 +389,7 @@
         });
 
         async function fetchAllData() {
+            setLoaderText("Loading Portal...");
             showScreen('screenLoader');
             try {
                 const res1 = await fetch(SHEET1_CSV_URL);
@@ -408,6 +409,11 @@
                 console.error("Error syncing Google Sheets:", err);
                 showScreen('screenError');
             }
+        }
+
+        function setLoaderText(text) {
+            let el = document.getElementById('loaderText');
+            if (el) el.innerText = text;
         }
 
         function parseCSVText(text) {
@@ -732,6 +738,10 @@
                 return;
             }
 
+            // Show loading screen with message "Please wait..." while processing submission and download
+            setLoaderText("Please wait...");
+            showScreen('screenLoader');
+
             let receiptNo = "R" + Math.floor(100000 + Math.random() * 900000);
             
             let now = new Date();
@@ -758,8 +768,6 @@
             document.getElementById('recBarcodeText').innerText = receiptNo;
 
             drawBarcode('barcodeCanvas', receiptNo);
-
-            downloadReceiptImage();
 
             let payload = {
                 receiptNo: receiptNo,
@@ -794,6 +802,10 @@
                 amount: calculatedTotalDue
             });
 
+            // Trigger the receipt image download after submit data processing completes
+            downloadReceiptImage();
+
+            // Transition to receipt success view
             showScreen('screenReceipt');
         }
 
