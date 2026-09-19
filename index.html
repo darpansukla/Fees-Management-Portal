@@ -179,7 +179,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 3: PAYMENT GATEWAY & QR -->
+        <!-- SCREEN 3: PAYMENT GATEWAY & QR (Updated to single option pay upi only one link) -->
         <div id="screenPayment" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
             <div class="space-y-3">
                 <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
@@ -192,10 +192,10 @@
                     </button>
                 </div>
 
-                <!-- Dynamic QR Box -->
+                <!-- Single Unified QR & Pay Direct Section -->
                 <div class="liquid-card rounded-3xl p-5 text-center space-y-3">
                     <div class="space-y-0.5">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Scan & Pay Exact Amount</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Scan QR or Click Payment App Below</p>
                         <p class="text-xl font-black text-indigo-600" id="qrDisplayAmount">₹0</p>
                     </div>
                     
@@ -203,26 +203,19 @@
                         <div id="qrcode" class="flex justify-center items-center"></div>
                     </div>
                     
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-[10px] text-slate-600">
-                        <p class="font-bold">UPI ID: <span class="text-indigo-600">sdarpan128@oksbi</span></p>
-                        <p class="text-[9px] text-slate-400 mt-0.5">Remark: <span id="displayRemarkText" class="font-medium text-slate-700"></span></p>
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">UPI Remark Generated:</p>
+                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-200/60 inline-block max-w-full">
+                            <span id="displayRemarkText" class="receipt-font text-[10px] font-bold text-slate-800 tracking-tight break-all"></span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Direct App Payment Buttons -->
-                <div class="grid grid-cols-3 gap-2">
-                    <a id="gpayLink" href="#" class="liquid-card hover:bg-slate-50 p-3 rounded-2xl text-center space-y-1 block border border-slate-200/60 transition-all active:scale-95">
-                        <div class="w-8 h-8 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xs mx-auto"><i class="fa-brands fa-google"></i></div>
-                        <p class="text-[10px] font-bold text-slate-800">GPay</p>
-                    </a>
-                    <a id="phonepeLink" href="#" class="liquid-card hover:bg-slate-50 p-3 rounded-2xl text-center space-y-1 block border border-slate-200/60 transition-all active:scale-95">
-                        <div class="w-8 h-8 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xs mx-auto"><i class="fa-solid fa-p"></i></div>
-                        <p class="text-[10px] font-bold text-slate-800">PhonePe</p>
-                    </a>
-                    <a id="paytmLink" href="#" class="liquid-card hover:bg-slate-50 p-3 rounded-2xl text-center space-y-1 block border border-slate-200/60 transition-all active:scale-95">
-                        <div class="w-8 h-8 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-xs mx-auto"><i class="fa-solid fa-wallet"></i></div>
-                        <p class="text-[10px] font-bold text-slate-800">Paytm</p>
-                    </a>
+                    <!-- Single Direct UPI App Payment Button -->
+                    <div class="pt-1">
+                        <a id="singleUpiLink" href="#" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 active:scale-[0.98] flex items-center justify-center gap-2 block">
+                            <i class="fa-solid fa-mobile-screen-button"></i> Pay Direct via UPI App
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -274,7 +267,7 @@
                     </div>
                 </div>
 
-                <!-- Receipt Ticket Preview (Styled exact to image) -->
+                <!-- Receipt Ticket Preview -->
                 <div class="liquid-card rounded-2xl p-4 text-[11px] border border-slate-300 bg-white receipt-font space-y-3 text-slate-800">
                     <div class="text-center space-y-0.5">
                         <h3 class="font-bold text-xs tracking-wider">PUTHICHITRA SCHOOL OF FINE ARTS &amp;<br>CRAFTS</h3>
@@ -337,7 +330,6 @@
                         <p class="font-bold text-[10px]">THANK YOU</p>
                         <p class="text-[9px] text-slate-500">Please keep this for your records.</p>
                         <div id="receiptBarcodeContainer" class="flex flex-col items-center justify-center pt-1">
-                            <!-- Barcode rendered via canvas -->
                             <canvas id="barcodeCanvas" class="h-8 max-w-[180px]"></canvas>
                             <span class="text-[8px] tracking-widest mt-0.5" id="recBarcodeText">-</span>
                         </div>
@@ -575,7 +567,6 @@
             document.getElementById('displaySchool').innerText = selectedStudentObj.school;
             document.getElementById('displayMonthlyFee').innerText = `₹${selectedStudentObj.monthlyFee}`;
 
-            // Passport Photo Display Handling
             let photoImg = document.getElementById('displayStudentPhoto');
             let photoPlaceholder = document.getElementById('displayPhotoPlaceholder');
             if (selectedStudentObj.photoUrl) {
@@ -675,16 +666,14 @@
             document.getElementById('paymentStudentSummary').innerText = summaryStr;
             document.getElementById('qrDisplayAmount').innerText = `₹${calculatedTotalDue}`;
 
-            let remark = `${selectedStudentObj.name} - ${activeSelectedMonths.join(', ')}`;
+            let remark = `${selectedStudentObj.name}_${selectedStudentObj.class.replace(/\s+/g, '')}_Monthly_Fee`;
             document.getElementById('displayRemarkText').innerText = remark;
 
             let upiId = "sdarpan128@oksbi";
             let payeeName = "Darpan Sukla";
             let upiDeepLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${calculatedTotalDue}&cu=INR&tn=${encodeURIComponent(remark)}`;
 
-            document.getElementById('gpayLink').href = upiDeepLink;
-            document.getElementById('phonepeLink').href = upiDeepLink;
-            document.getElementById('paytmLink').href = upiDeepLink;
+            document.getElementById('singleUpiLink').href = upiDeepLink;
 
             let qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = '';
