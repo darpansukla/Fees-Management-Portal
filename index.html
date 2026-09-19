@@ -120,12 +120,18 @@
         <div id="screenStudentDetails" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
             <div class="space-y-3">
                 <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
-                    <div>
-                        <p class="text-[9px] text-slate-400 font-medium">Student Name:</p>
-                        <p class="font-bold text-slate-800 text-[11px] truncate max-w-[210px]" id="displayStudentName">-</p>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-11 h-11 rounded-xl overflow-hidden bg-indigo-50 border border-indigo-100 flex-shrink-0 flex items-center justify-center text-indigo-400">
+                            <img id="displayStudentPhoto" src="" alt="Photo" class="w-full h-full object-cover hidden">
+                            <i id="displayPhotoPlaceholder" class="fa-solid fa-user text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-slate-400 font-medium">Student Name:</p>
+                            <p class="font-bold text-slate-800 text-[11px] truncate max-w-[170px]" id="displayStudentName">-</p>
+                        </div>
                     </div>
-                    <button onclick="logoutStudent()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-xl font-bold text-[10px] transition-all">
-                        <i class="fa-solid fa-arrow-left mr-1"></i> Change Name
+                    <button onclick="logoutStudent()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-xl font-bold text-[10px] transition-all flex-shrink-0">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Change
                     </button>
                 </div>
 
@@ -416,6 +422,18 @@
             if (el) el.innerText = text;
         }
 
+        function formatImageUrl(url) {
+            if (!url) return '';
+            let cleanUrl = url.trim();
+            if (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com')) {
+                let fileId = '';
+                if (cleanUrl.includes('/file/d/')) fileId = cleanUrl.split('/file/d/')[1]?.split('/')[0];
+                else if (cleanUrl.includes('id=')) fileId = cleanUrl.split('id=')[1]?.split('&')[0];
+                if (fileId) return `https://lh3.googleusercontent.com/d/${fileId}`;
+            }
+            return cleanUrl;
+        }
+
         function parseCSVText(text) {
             let lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length <= 1) return [];
@@ -449,6 +467,7 @@
                 let sSchool = r[3] || "";
                 let monthlyFee = parseFloat(r[4]) || 0;
                 let joiningMonth = r[5] || "April 2026";
+                let photoUrl = r[6] || "";
 
                 if (sName) {
                     studentsDataMap[sName.toLowerCase()] = {
@@ -456,7 +475,8 @@
                         class: sClass || 'N/A',
                         school: sSchool || 'N/A',
                         monthlyFee: monthlyFee,
-                        joiningMonth: joiningMonth
+                        joiningMonth: joiningMonth,
+                        photoUrl: photoUrl
                     };
                 }
             });
@@ -554,6 +574,20 @@
             document.getElementById('displayClass').innerText = selectedStudentObj.class;
             document.getElementById('displaySchool').innerText = selectedStudentObj.school;
             document.getElementById('displayMonthlyFee').innerText = `₹${selectedStudentObj.monthlyFee}`;
+
+            // Passport Photo Display Handling
+            let photoImg = document.getElementById('displayStudentPhoto');
+            let photoPlaceholder = document.getElementById('displayPhotoPlaceholder');
+            if (selectedStudentObj.photoUrl) {
+                let formattedPhotoUrl = formatImageUrl(selectedStudentObj.photoUrl);
+                photoImg.src = formattedPhotoUrl;
+                photoImg.classList.remove('hidden');
+                photoPlaceholder.classList.add('hidden');
+            } else {
+                photoImg.src = '';
+                photoImg.classList.add('hidden');
+                photoPlaceholder.classList.remove('hidden');
+            }
 
             let paidMonthsMap = new Map();
             submittedRecordsList.forEach(rec => {
@@ -725,7 +759,6 @@
                 ctx.fillRect(x, 10, 1, 40);
                 x += 3;
             }
-            // Add extra standard bars for look
             for (let i = 0; i < 25; i++) {
                 ctx.fillRect(x, 10, (i % 3 === 0) ? 2 : 1, 40);
                 x += 4;
@@ -738,7 +771,6 @@
                 return;
             }
 
-            // Show loading screen with message "Please wait..." while processing submission and download
             setLoaderText("Please wait...");
             showScreen('screenLoader');
 
@@ -802,10 +834,7 @@
                 amount: calculatedTotalDue
             });
 
-            // Trigger the receipt image download after submit data processing completes
             downloadReceiptImage();
-
-            // Transition to receipt success view
             showScreen('screenReceipt');
         }
 
@@ -816,7 +845,6 @@
             canvas.width = 600;
             canvas.height = 750;
 
-            // Background
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -831,7 +859,6 @@
             ctx.fillStyle = "#000000";
             ctx.textAlign = "center";
             
-            // Header
             ctx.font = "bold 20px 'Courier New', monospace";
             ctx.fillText("PUTHICHITRA SCHOOL OF FINE ARTS &", canvas.width / 2, 45);
             ctx.fillText("CRAFTS", canvas.width / 2, 70);
@@ -839,7 +866,6 @@
             ctx.font = "14px 'Courier New', monospace";
             ctx.fillText("Guwahati", canvas.width / 2, 98);
 
-            // Boxed Title
             ctx.strokeStyle = "#000000";
             ctx.lineWidth = 1.5;
             ctx.strokeRect(180, 118, 240, 32);
@@ -849,7 +875,6 @@
             ctx.font = "bold 14px 'Courier New', monospace";
             ctx.fillText("Session: 2026-27", canvas.width / 2, 180);
 
-            // Dashed Divider 1
             drawDashedLine(ctx, 40, 205, 560, 205);
 
             ctx.textAlign = "left";
@@ -888,7 +913,6 @@
 
             drawDashedLine(ctx, 40, 520, 560, 520);
 
-            // Total Paid Box
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(40, 535);
@@ -910,7 +934,6 @@
             ctx.font = "12px 'Courier New', monospace";
             ctx.fillText("Please keep this for your records.", canvas.width / 2, 663);
 
-            // Draw Barcode on Canvas
             ctx.fillStyle = "#000000";
             let bx = 210;
             for (let i = 0; i < recNo.length; i++) {
