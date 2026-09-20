@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <!-- QRCode Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Html2Canvas for Statement Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -48,7 +50,7 @@
 
         <!-- HEADER -->
         <header class="liquid-header rounded-3xl p-3.5 shadow-sm flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="showStudentSelectScreen()">
                 <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xs border border-indigo-100 shadow-inner">
                     <i class="fa-solid fa-wallet"></i>
                 </div>
@@ -57,8 +59,13 @@
                     <p class="text-[9px] text-slate-400 font-medium">Student Portal System</p>
                 </div>
             </div>
-            <div class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full text-[9px] font-bold flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Active
+            <div class="flex items-center gap-2">
+                <button onclick="openAdminPinModal()" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 px-3 py-1.5 rounded-xl font-bold text-[10px] transition-all flex items-center gap-1.5 border border-slate-200">
+                    <i class="fa-solid fa-lock text-[9px]"></i> Admin
+                </button>
+                <div class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full text-[9px] font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Active
+                </div>
             </div>
         </header>
 
@@ -82,7 +89,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 1: TYPE STUDENT NAME (3 LETTERS MINIMUM) -->
+        <!-- SCREEN 1: TYPE STUDENT NAME -->
         <div id="screenStudentSelect" class="hidden liquid-card rounded-3xl p-6 space-y-5 animate-fade-in my-auto">
             <div class="space-y-1 text-center">
                 <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-lg mx-auto mb-3 shadow-inner">
@@ -103,9 +110,8 @@
                     </div>
                 </div>
 
-                <!-- Auto-suggest Dropdown List Box -->
                 <div id="suggestionsBox" class="hidden absolute left-0 right-0 top-[74px] bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-50 p-1 divide-y divide-slate-100">
-                    <!-- Dynamic Suggestions Appear Here -->
+                    <!-- Suggestions -->
                 </div>
 
                 <p id="loginErrorMsg" class="text-[10px] text-rose-600 font-bold hidden text-center">Please select a valid name from the list.</p>
@@ -116,7 +122,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 2: STUDENT DETAILS & PENDING DUES -->
+        <!-- SCREEN 2: STUDENT DETAILS -->
         <div id="screenStudentDetails" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
             <div class="space-y-3">
                 <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
@@ -135,7 +141,6 @@
                     </button>
                 </div>
 
-                <!-- Info Cards Grid -->
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="liquid-card rounded-2xl p-3 space-y-1">
                         <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Class</p>
@@ -147,7 +152,6 @@
                     </div>
                 </div>
 
-                <!-- Financial Summary Box -->
                 <div class="liquid-card rounded-2xl p-4 bg-gradient-to-br from-indigo-50/50 to-white space-y-2 border border-indigo-100">
                     <div class="flex justify-between items-center text-xs">
                         <span class="text-slate-500 font-medium">Monthly Fee:</span>
@@ -163,13 +167,12 @@
                     </div>
                 </div>
 
-                <!-- Pending Months List Container -->
                 <div class="space-y-1.5">
                     <div class="flex justify-between items-center px-1">
                         <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Dues & Payment Records</span>
                     </div>
                     <div id="monthsContainer" class="liquid-card rounded-2xl p-3 space-y-2 max-h-[30vh] overflow-y-auto border border-slate-200/60">
-                        <!-- Dynamic Month Badges with Payment Dates -->
+                        <!-- Months List -->
                     </div>
                 </div>
             </div>
@@ -179,7 +182,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 3: PAYMENT GATEWAY & QR (Updated to single option pay upi only one link) -->
+        <!-- SCREEN 3: PAYMENT GATEWAY & QR -->
         <div id="screenPayment" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
             <div class="space-y-3">
                 <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
@@ -192,7 +195,6 @@
                     </button>
                 </div>
 
-                <!-- Single Unified QR & Pay Direct Section -->
                 <div class="liquid-card rounded-3xl p-5 text-center space-y-3">
                     <div class="space-y-0.5">
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Scan QR or Click Payment App Below</p>
@@ -210,7 +212,6 @@
                         </div>
                     </div>
 
-                    <!-- Single Direct UPI App Payment Button -->
                     <div class="pt-1">
                         <a id="singleUpiLink" href="#" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 active:scale-[0.98] flex items-center justify-center gap-2 block">
                             <i class="fa-solid fa-mobile-screen-button"></i> Pay Direct via UPI App
@@ -224,7 +225,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 4: SCREENSHOT UPLOAD & SUBMISSION -->
+        <!-- SCREEN 4: SCREENSHOT UPLOAD -->
         <div id="screenUpload" class="hidden liquid-card rounded-3xl p-5 space-y-4 animate-fade-in my-auto">
             <div class="space-y-1">
                 <h2 class="text-sm font-black tracking-tight text-slate-900">Upload Payment Proof</h2>
@@ -263,76 +264,73 @@
                     </div>
                     <div class="space-y-0.5">
                         <h2 class="text-sm font-black text-slate-900">Payment Successful!</h2>
-                        <p class="text-[10px] text-slate-400">Receipt image downloaded in exact receipt format.</p>
+                        <p class="text-[10px] text-slate-400">Professional receipt image downloaded successfully.</p>
                     </div>
                 </div>
 
-                <!-- Receipt Ticket Preview -->
-                <div class="liquid-card rounded-2xl p-4 text-[11px] border border-slate-300 bg-white receipt-font space-y-3 text-slate-800">
-                    <div class="text-center space-y-0.5">
-                        <h3 class="font-bold text-xs tracking-wider">PUTHICHITRA SCHOOL OF FINE ARTS &amp;<br>CRAFTS</h3>
-                        <p class="text-[9px] text-slate-500">Guwahati</p>
-                        <div class="inline-block border border-dashed border-slate-400 px-3 py-1 my-1 text-[10px] font-bold tracking-widest">
-                            FEE RECEIPT
+                <!-- Modern Receipt Ticket Preview -->
+                <div class="liquid-card rounded-3xl p-5 text-[11px] border border-slate-200 bg-white receipt-font space-y-4 text-slate-800 shadow-sm">
+                    <div class="text-center space-y-1">
+                        <div class="inline-block bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest mb-1">
+                            Official Receipt
                         </div>
-                        <p class="text-[10px] font-bold">Session: 2026-27</p>
+                        <h3 class="font-extrabold text-xs tracking-wide text-slate-900">PUTHICHITRA SCHOOL OF FINE ARTS &amp;<br>CRAFTS</h3>
+                        <p class="text-[9px] text-slate-400 font-medium">Guwahati • Session: 2026-27</p>
                     </div>
 
-                    <div class="border-t border-dashed border-slate-300 pt-2 space-y-1 text-[10px]">
+                    <div class="bg-slate-50/80 rounded-2xl p-3 space-y-1.5 border border-slate-100 text-[10px]">
                         <div class="flex justify-between">
-                            <span class="text-slate-500">Sub</span>
-                            <span class="font-bold text-right">PUTHICHITRA SCHOOL OF FINE ARTS &amp;</span>
+                            <span class="text-slate-400 font-medium">Date</span>
+                            <span class="font-bold text-slate-800" id="recDate">-</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-500">Center:</span>
-                            <span class="font-bold">CRAFTS, GUWAHATI</span>
-                        </div>
-                        <div class="flex justify-between pt-1">
-                            <span class="text-slate-500">Date:</span>
-                            <span class="font-bold" id="recDate">-</span>
+                            <span class="text-slate-400 font-medium">Deposit Time</span>
+                            <span class="font-bold text-indigo-600" id="recTime">-</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-500">Receipt No:</span>
-                            <span class="font-bold" id="recReceiptNo">-</span>
+                            <span class="text-slate-400 font-medium">Receipt No</span>
+                            <span class="font-bold text-slate-800" id="recReceiptNo">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 font-medium">Center</span>
+                            <span class="font-bold text-slate-800">GUWAHATI</span>
                         </div>
                     </div>
 
-                    <div class="border-t border-dashed border-slate-300 pt-2 space-y-1">
-                        <div class="font-bold text-slate-900" id="recStudentHeader">-</div>
+                    <div class="space-y-2 pt-1">
+                        <div class="font-black text-slate-900 text-xs border-b border-slate-100 pb-1.5" id="recStudentHeader">-</div>
                         <div class="flex justify-between text-[10px]">
-                            <span class="text-slate-500">Months:</span>
-                            <span class="font-bold text-rose-600" id="recMonths">-</span>
+                            <span class="text-slate-500 font-medium">Paid Months:</span>
+                            <span class="font-bold text-rose-600 text-right" id="recMonths">-</span>
                         </div>
                         <div class="flex justify-between text-[10px]">
-                            <span class="text-slate-500">Mode:</span>
-                            <span class="font-bold">UPI</span>
+                            <span class="text-slate-500 font-medium">Payment Mode:</span>
+                            <span class="font-bold text-slate-800">UPI Digital</span>
                         </div>
                         <div class="flex justify-between text-[10px] pt-1">
-                            <span class="text-slate-500" id="recItemDesc">Tuition Fee:</span>
-                            <span class="font-bold" id="recItemAmount">-</span>
-                        </div>
-                        <div class="flex justify-between text-[10px] border-b border-dashed border-slate-300 pb-1">
-                            <span class="text-slate-500">Sub-total:</span>
-                            <span class="font-bold" id="recSubtotal">-</span>
+                            <span class="text-slate-500 font-medium" id="recItemDesc">Tuition Fee:</span>
+                            <span class="font-bold text-slate-800" id="recItemAmount">-</span>
                         </div>
                     </div>
 
-                    <div class="border-b-2 border-slate-800 pb-2 pt-1 flex justify-between items-center">
-                        <span class="font-black text-xs uppercase">TOTAL PAID:</span>
-                        <span class="font-black text-sm" id="recAmount">-</span>
+                    <div class="bg-indigo-50/40 rounded-2xl p-3 border border-indigo-100/60 flex justify-between items-center">
+                        <div>
+                            <span class="font-black text-xs uppercase text-slate-900">Total Paid</span>
+                            <p class="text-[9px] text-slate-400">Verified & Confirmed</p>
+                        </div>
+                        <span class="font-black text-base text-emerald-600" id="recAmount">-</span>
                     </div>
 
-                    <div class="text-center italic text-[10px] text-slate-600" id="recAmountWords">
+                    <div class="text-center italic text-[10px] text-slate-500 bg-slate-50/50 py-2 rounded-xl" id="recAmountWords">
                         -
                     </div>
 
-                    <div class="border-t border-dashed border-slate-300 pt-2 text-center space-y-1.5">
-                        <p class="font-bold text-[10px]">THANK YOU</p>
-                        <p class="text-[9px] text-slate-500">Please keep this for your records.</p>
-                        <div id="receiptBarcodeContainer" class="flex flex-col items-center justify-center pt-1">
-                            <canvas id="barcodeCanvas" class="h-8 max-w-[180px]"></canvas>
-                            <span class="text-[8px] tracking-widest mt-0.5" id="recBarcodeText">-</span>
+                    <div class="pt-2 text-center space-y-2 border-t border-slate-100">
+                        <div class="flex justify-center">
+                            <div id="receiptQrCodeContainer" class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm inline-block"></div>
                         </div>
+                        <p class="text-[9px] font-bold text-slate-700 tracking-wider">SECURE DIGITAL QR RECEIPT</p>
+                        <p class="text-[8px] text-slate-400">Please keep this digital copy for your official records.</p>
                     </div>
                 </div>
             </div>
@@ -347,11 +345,143 @@
             </div>
         </div>
 
+        <!-- SCREEN 6: ADMIN DASHBOARD -->
+        <div id="screenAdminDashboard" class="hidden space-y-3 animate-fade-in flex-grow flex flex-col justify-between">
+            <div class="space-y-3">
+                <div class="liquid-card rounded-2xl p-3.5 shadow-sm flex justify-between items-center text-xs">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-slate-400 font-medium">Admin Portal</p>
+                            <p class="font-bold text-slate-800 text-[11px]">Management Panel</p>
+                        </div>
+                    </div>
+                    <button onclick="showStudentSelectScreen()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-xl font-bold text-[10px] transition-all">
+                        <i class="fa-solid fa-house mr-1"></i> Exit Admin
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="switchAdminTab('accounts')" id="adminTabAccountsBtn" class="liquid-card rounded-2xl p-4 text-center space-y-2 border-2 border-indigo-600 bg-indigo-50/40 transition-all">
+                        <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center mx-auto shadow-sm">
+                            <i class="fa-solid fa-address-book text-sm"></i>
+                        </div>
+                        <p class="text-xs font-black text-slate-900">Accounts</p>
+                        <p class="text-[9px] text-slate-500">Student list & statements</p>
+                    </button>
+
+                    <button onclick="switchAdminTab('reminders')" id="adminTabRemindersBtn" class="liquid-card rounded-2xl p-4 text-center space-y-2 border-2 border-transparent transition-all">
+                        <div class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center mx-auto shadow-sm">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                        </div>
+                        <p class="text-xs font-black text-slate-900">Reminder Send</p>
+                        <p class="text-[9px] text-slate-500">WhatsApp reminders</p>
+                    </button>
+                </div>
+
+                <!-- ACCOUNTS SECTION -->
+                <div id="adminAccountsSection" class="space-y-2.5">
+                    <div class="flex justify-between items-center px-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">All Registered Students (<span id="adminTotalStudentsCount">0</span>)</span>
+                    </div>
+                    <div id="adminStudentsListContainer" class="liquid-card rounded-2xl p-2.5 space-y-2 max-h-[42vh] overflow-y-auto border border-slate-200/60">
+                        <!-- Student List -->
+                    </div>
+                </div>
+
+                <!-- REMINDERS SECTION -->
+                <div id="adminRemindersSection" class="hidden space-y-2.5">
+                    <div class="flex justify-between items-center px-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Pending Dues & WhatsApp Reminders</span>
+                    </div>
+                    <div id="adminRemindersListContainer" class="liquid-card rounded-2xl p-2.5 space-y-2 max-h-[42vh] overflow-y-auto border border-slate-200/60">
+                        <!-- Reminders List -->
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="showStudentSelectScreen()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-6 rounded-2xl text-xs transition-all">
+                Back to Student Portal
+            </button>
+        </div>
+
         <!-- FOOTER -->
         <footer class="liquid-header rounded-2xl py-2.5 px-4 text-center text-[10px] text-slate-400 shadow-sm">
             Made by Darpan Sukla
         </footer>
 
+    </div>
+
+    <!-- ADMIN PIN MODAL -->
+    <div id="adminPinModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="liquid-card rounded-3xl p-6 max-w-xs w-full space-y-4 animate-fade-in shadow-2xl">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-lg mx-auto mb-2 shadow-inner">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="text-sm font-black text-slate-900">Admin Authentication</h3>
+                <p class="text-[11px] text-slate-400">Enter Admin PIN to access dashboard.</p>
+            </div>
+            <div class="space-y-2">
+                <input type="password" id="adminPinInput" placeholder="Enter PIN..." maxlength="6" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-sm font-bold tracking-widest text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p id="adminPinError" class="text-[10px] text-rose-600 font-bold hidden text-center">Incorrect PIN. Access denied.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="closeAdminPinModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-2xl text-xs transition-all">
+                    Cancel
+                </button>
+                <button onclick="verifyAdminPin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20">
+                    Verify
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT STATEMENT MODAL (RECEIPT NO REMOVED) -->
+    <div id="studentStatementModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+        <div class="liquid-card rounded-3xl p-5 max-w-sm w-full space-y-3 animate-fade-in shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                <div>
+                    <h3 class="text-xs font-black text-slate-900 uppercase">Student Full Statement</h3>
+                    <p class="text-[9px] text-slate-400" id="statementStudentTitle">-</p>
+                </div>
+                <button onclick="closeStatementModal()" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="statementCardContent" class="bg-white rounded-2xl p-4 border border-slate-200 space-y-3 receipt-font overflow-y-auto flex-grow text-[11px] text-slate-800">
+                <div class="text-center space-y-0.5">
+                    <h4 class="font-bold text-xs">PUTHICHITRA SCHOOL OF FINE ARTS & CRAFTS</h4>
+                    <p class="text-[9px] text-slate-500">Statement of Account</p>
+                </div>
+                <div class="border-t border-dashed border-slate-300 pt-2 space-y-1 text-[10px]">
+                    <div class="flex justify-between"><span class="text-slate-500">Student:</span><span class="font-bold" id="stModalName">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Class:</span><span class="font-bold" id="stModalClass">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">School:</span><span class="font-bold" id="stModalSchool">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Monthly Fee:</span><span class="font-bold" id="stModalFee">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Mobile No:</span><span class="font-bold" id="stModalPhone">-</span></div>
+                </div>
+                <div class="border-t border-dashed border-slate-300 pt-2 space-y-1.5">
+                    <p class="font-bold text-[10px] uppercase text-slate-500">Payment History:</p>
+                    <div id="stModalTransactionsList" class="space-y-1">
+                        <!-- Transactions -->
+                    </div>
+                </div>
+                <div class="border-t border-dashed border-slate-300 pt-2 flex justify-between items-center font-bold">
+                    <span>Total Paid:</span>
+                    <span id="stModalTotalPaid" class="text-emerald-600">₹0</span>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <button onclick="downloadStatementImage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Download Full Statement Image
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- APPLICATION SCRIPT -->
@@ -381,6 +511,7 @@
         let activeSelectedMonths = [];
         let calculatedTotalDue = 0;
         let uploadedFile = null;
+        let currentStatementStudent = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllData();
@@ -460,6 +591,7 @@
                 let monthlyFee = parseFloat(r[4]) || 0;
                 let joiningMonth = r[5] || "April 2026";
                 let photoUrl = r[6] || "";
+                let phoneNo = r[7] || "";
 
                 if (sName) {
                     studentsDataMap[sName.toLowerCase()] = {
@@ -468,7 +600,8 @@
                         school: sSchool || 'N/A',
                         monthlyFee: monthlyFee,
                         joiningMonth: joiningMonth,
-                        photoUrl: photoUrl
+                        photoUrl: photoUrl,
+                        phone: phoneNo
                     };
                 }
             });
@@ -490,12 +623,37 @@
             });
         }
 
+        // Friendly date parser for clear understanding (e.g. "12 Oct 2026, 02:30 PM")
+        function formatReadableTimestamp(rawTs) {
+            if (!rawTs) return '-';
+            let parts = rawTs.split(' ');
+            let datePart = parts[0] || '';
+            let timePart = parts[1] || '';
+            let ampmPart = parts[2] || '';
+
+            let dParts = datePart.split('/');
+            if (dParts.length === 3) {
+                let day = dParts[0];
+                let monthNum = parseInt(dParts[1], 10);
+                let year = dParts[2];
+                let monthsNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                let mStr = monthsNames[monthNum - 1] || dParts[1];
+                let timeStr = timePart ? `${timePart} ${ampmPart}`.trim() : '';
+                return timeStr ? `${day} ${mStr} ${year}, ${timeStr}` : `${day} ${mStr} ${year}`;
+            }
+            return rawTs;
+        }
+
         function showScreen(screenId) {
-            ['screenLoader', 'screenError', 'screenStudentSelect', 'screenStudentDetails', 'screenPayment', 'screenUpload', 'screenReceipt'].forEach(id => {
+            ['screenLoader', 'screenError', 'screenStudentSelect', 'screenStudentDetails', 'screenPayment', 'screenUpload', 'screenReceipt', 'screenAdminDashboard'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(screenId).classList.remove('hidden');
             window.scrollTo(0, 0);
+        }
+
+        function showStudentSelectScreen() {
+            showScreen('screenStudentSelect');
         }
 
         function handleNameInput(query) {
@@ -588,7 +746,7 @@
                     let dateOnly = rawDateStr.includes(' ') ? rawDateStr.split(' ')[0] : rawDateStr;
                     mList.forEach(m => {
                         if (dateOnly) {
-                            paidMonthsMap.set(m.toLowerCase(), dateOnly);
+                            paidMonthsMap.set(m.toLowerCase(), formatReadableTimestamp(rawDateStr));
                         }
                     });
                 }
@@ -666,7 +824,7 @@
             document.getElementById('paymentStudentSummary').innerText = summaryStr;
             document.getElementById('qrDisplayAmount').innerText = `₹${calculatedTotalDue}`;
 
-            let remark = `${selectedStudentObj.name}_${selectedStudentObj.class.replace(/\s+/g, '')}_Monthly_Fee`;
+            let remark = `${selectedStudentObj.name}_${activeSelectedMonths.join(', ')}`;
             document.getElementById('displayRemarkText').innerText = remark;
 
             let upiId = "sdarpan128@oksbi";
@@ -728,32 +886,6 @@
             return str.trim() ? str.trim() + ' Rupees Only' : 'Zero Rupees Only';
         }
 
-        function drawBarcode(canvasId, text) {
-            let canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            let ctx = canvas.getContext('2d');
-            canvas.width = 240;
-            canvas.height = 60;
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "#000000";
-            let x = 20;
-            let barWidth = 2;
-            for (let i = 0; i < text.length; i++) {
-                let code = text.charCodeAt(i);
-                barWidth = (code % 2 === 0) ? 2 : 3;
-                ctx.fillRect(x, 10, barWidth, 40);
-                x += barWidth + 3;
-                ctx.fillRect(x, 10, 1, 40);
-                x += 3;
-            }
-            for (let i = 0; i < 25; i++) {
-                ctx.fillRect(x, 10, (i % 3 === 0) ? 2 : 1, 40);
-                x += 4;
-            }
-        }
-
         async function submitPaymentData() {
             if (!uploadedFile) {
                 document.getElementById('uploadErrorMsg').classList.remove('hidden');
@@ -769,10 +901,20 @@
             let day = String(now.getDate()).padStart(2, '0');
             let monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             let formattedDate = `${day} ${monthsShort[now.getMonth()]} ${now.getFullYear()}`;
-            let timestampFull = now.toLocaleString('en-GB');
+            
+            let hours = now.getHours();
+            let minutes = String(now.getMinutes()).padStart(2, '0');
+            let seconds = String(now.getSeconds()).padStart(2, '0');
+            let ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            let formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+            
+            let timestampFull = `${now.toLocaleDateString('en-GB')} ${formattedTime}`;
 
             document.getElementById('recReceiptNo').innerText = receiptNo;
             document.getElementById('recDate').innerText = formattedDate;
+            document.getElementById('recTime').innerText = formattedTime;
             
             let studentHeaderStr = `${selectedStudentObj.name.toUpperCase()} (${selectedStudentObj.class.toUpperCase()})`;
             document.getElementById('recStudentHeader').innerText = studentHeaderStr;
@@ -783,12 +925,20 @@
             let moCount = activeSelectedMonths.length;
             document.getElementById('recItemDesc').innerText = `Tuition (${moCount} Mo):`;
             document.getElementById('recItemAmount').innerText = `₹${calculatedTotalDue}`;
-            document.getElementById('recSubtotal').innerText = `₹${calculatedTotalDue}`;
             document.getElementById('recAmount').innerText = `₹${calculatedTotalDue}`;
             document.getElementById('recAmountWords').innerText = numberToWords(calculatedTotalDue);
-            document.getElementById('recBarcodeText').innerText = receiptNo;
 
-            drawBarcode('barcodeCanvas', receiptNo);
+            let receiptQrContainer = document.getElementById('receiptQrCodeContainer');
+            receiptQrContainer.innerHTML = '';
+            let receiptQrData = `Receipt:${receiptNo}|Student:${selectedStudentObj.name}|Amount:${calculatedTotalDue}|Time:${timestampFull}`;
+            new QRCode(receiptQrContainer, {
+                text: receiptQrData,
+                width: 90,
+                height: 90,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
 
             let payload = {
                 receiptNo: receiptNo,
@@ -815,7 +965,7 @@
 
             submittedRecordsList.push({
                 receiptNo: receiptNo,
-                timestamp: new Date().toISOString(),
+                timestamp: timestampFull,
                 studentName: selectedStudentObj.name,
                 class: selectedStudentObj.class,
                 school: selectedStudentObj.school,
@@ -832,114 +982,143 @@
             let ctx = canvas.getContext('2d');
             
             canvas.width = 600;
-            canvas.height = 750;
+            canvas.height = 800;
 
+            // Background
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             let recNo = document.getElementById('recReceiptNo').innerText;
             let date = document.getElementById('recDate').innerText;
+            let time = document.getElementById('recTime').innerText;
             let studentHeader = document.getElementById('recStudentHeader').innerText;
             let months = document.getElementById('recMonths').innerText;
-            let itemDesc = document.getElementById('recItemDesc').innerText;
             let amount = document.getElementById('recAmount').innerText;
             let amountWords = document.getElementById('recAmountWords').innerText;
 
-            ctx.fillStyle = "#000000";
+            ctx.fillStyle = "#1e293b";
             ctx.textAlign = "center";
             
-            ctx.font = "bold 20px 'Courier New', monospace";
-            ctx.fillText("PUTHICHITRA SCHOOL OF FINE ARTS &", canvas.width / 2, 45);
-            ctx.fillText("CRAFTS", canvas.width / 2, 70);
+            // Header
+            ctx.font = "bold 18px 'Inter', sans-serif";
+            ctx.fillText("PUTHICHITRA SCHOOL OF FINE ARTS & CRAFTS", canvas.width / 2, 45);
             
-            ctx.font = "14px 'Courier New', monospace";
-            ctx.fillText("Guwahati", canvas.width / 2, 98);
+            ctx.font = "12px 'Inter', sans-serif";
+            ctx.fillStyle = "#64748b";
+            ctx.fillText("Guwahati • Session: 2026-27", canvas.width / 2, 68);
 
-            ctx.strokeStyle = "#000000";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(180, 118, 240, 32);
-            ctx.font = "bold 14px 'Courier New', monospace";
-            ctx.fillText("FEE RECEIPT", canvas.width / 2, 139);
+            // Badge
+            ctx.fillStyle = "#e0e7ff";
+            roundRect(ctx, 215, 88, 170, 26, 13, true, false);
+            ctx.fillStyle = "#4338ca";
+            ctx.font = "bold 11px 'Inter', sans-serif";
+            ctx.fillText("OFFICIAL PAYMENT RECEIPT", canvas.width / 2, 105);
 
-            ctx.font = "bold 14px 'Courier New', monospace";
-            ctx.fillText("Session: 2026-27", canvas.width / 2, 180);
-
-            drawDashedLine(ctx, 40, 205, 560, 205);
-
-            ctx.textAlign = "left";
-            ctx.font = "13px 'Courier New', monospace";
-            ctx.fillText("Sub", 40, 232);
-            ctx.fillText("PUTHICHITRA SCHOOL OF FINE ARTS &", 150, 232);
-            ctx.fillText("Center:", 40, 255);
-            ctx.fillText("CRAFTS, GUWAHATI", 150, 255);
-
-            ctx.fillText("Date:", 40, 290);
-            ctx.fillText(date, 460, 290);
-            ctx.fillText("Receipt No:", 40, 315);
-            ctx.fillText(recNo, 460, 315);
-
-            drawDashedLine(ctx, 40, 335, 560, 335);
-
-            ctx.font = "bold 14px 'Courier New', monospace";
-            ctx.fillText(studentHeader, 40, 368);
-
-            ctx.font = "13px 'Courier New', monospace";
-            ctx.fillText("Months:", 40, 398);
-            ctx.fillStyle = "#dc2626";
-            ctx.fillText(months, 440, 398);
-
-            ctx.fillStyle = "#000000";
-            ctx.fillText("Mode:", 40, 423);
-            ctx.fillText("UPI", 515, 423);
-
-            ctx.fillText(itemDesc, 40, 458);
-            ctx.fillText(amount, 490, 458);
-
-            drawDashedLine(ctx, 40, 478, 560, 478);
-
-            ctx.fillText("Sub-total:", 40, 503);
-            ctx.fillText(amount, 490, 503);
-
-            drawDashedLine(ctx, 40, 520, 560, 520);
-
-            ctx.lineWidth = 2;
+            // Divider
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(40, 535);
-            ctx.lineTo(560, 535);
+            ctx.moveTo(40, 130);
+            ctx.lineTo(560, 130);
             ctx.stroke();
 
-            ctx.font = "bold 16px 'Courier New', monospace";
-            ctx.fillText("TOTAL PAID:", 40, 565);
-            ctx.fillText(amount, 470, 565);
+            // Meta Box (Date, Time, Receipt No)
+            ctx.fillStyle = "#f8fafc";
+            roundRect(ctx, 40, 145, 520, 65, 12, true, true);
+            
+            ctx.textAlign = "left";
+            ctx.font = "11px 'Inter', sans-serif";
+            ctx.fillStyle = "#64748b";
+            ctx.fillText("Receipt No:", 60, 172);
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 11px 'Inter', sans-serif";
+            ctx.fillText(recNo, 135, 172);
 
-            ctx.font = "italic 13px 'Courier New', monospace";
+            ctx.fillStyle = "#64748b";
+            ctx.font = "11px 'Inter', sans-serif";
+            ctx.fillText("Date:", 330, 172);
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 11px 'Inter', sans-serif";
+            ctx.fillText(date, 375, 172);
+
+            ctx.fillStyle = "#64748b";
+            ctx.font = "11px 'Inter', sans-serif";
+            ctx.fillText("Deposit Time:", 60, 196);
+            ctx.fillStyle = "#4338ca";
+            ctx.font = "bold 11px 'Inter', sans-serif";
+            ctx.fillText(time, 145, 196);
+
+            ctx.fillStyle = "#64748b";
+            ctx.font = "11px 'Inter', sans-serif";
+            ctx.fillText("Center:", 330, 196);
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 11px 'Inter', sans-serif";
+            ctx.fillText("GUWAHATI", 380, 196);
+
+            // Student Header
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 14px 'Inter', sans-serif";
+            ctx.fillText(studentHeader, 40, 245);
+
+            // Details
+            ctx.font = "12px 'Inter', sans-serif";
+            ctx.fillStyle = "#64748b";
+            ctx.fillText("Paid Months:", 40, 280);
+            ctx.fillStyle = "#dc2626";
+            ctx.font = "bold 12px 'Inter', sans-serif";
+            ctx.fillText(months, 135, 280);
+
+            ctx.fillStyle = "#64748b";
+            ctx.font = "12px 'Inter', sans-serif";
+            ctx.fillText("Payment Mode:", 40, 310);
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 12px 'Inter', sans-serif";
+            ctx.fillText("UPI Digital Transfer", 135, 310);
+
+            // Divider
+            ctx.beginPath();
+            ctx.moveTo(40, 335);
+            ctx.lineTo(560, 335);
+            ctx.stroke();
+
+            // Total Section Box
+            ctx.fillStyle = "#f8fafc";
+            roundRect(ctx, 40, 350, 520, 70, 16, true, true);
+
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 13px 'Inter', sans-serif";
+            ctx.fillText("TOTAL PAID AMOUNT", 70, 391);
+            ctx.fillStyle = "#16a34a";
+            ctx.font = "bold 20px 'Inter', sans-serif";
+            ctx.textAlign = "right";
+            ctx.fillText(amount, 530, 392);
+
+            // Amount in words
             ctx.textAlign = "center";
-            ctx.fillText(amountWords, canvas.width / 2, 595);
+            ctx.fillStyle = "#64748b";
+            ctx.font = "italic 11px 'Inter', sans-serif";
+            ctx.fillText(amountWords, canvas.width / 2, 452);
 
-            drawDashedLine(ctx, 40, 615, 560, 615);
+            // Divider before QR
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.beginPath();
+            ctx.moveTo(40, 475);
+            ctx.lineTo(560, 475);
+            ctx.stroke();
 
-            ctx.font = "bold 13px 'Courier New', monospace";
-            ctx.fillText("THANK YOU", canvas.width / 2, 642);
-            ctx.font = "12px 'Courier New', monospace";
-            ctx.fillText("Please keep this for your records.", canvas.width / 2, 663);
-
-            ctx.fillStyle = "#000000";
-            let bx = 210;
-            for (let i = 0; i < recNo.length; i++) {
-                let code = recNo.charCodeAt(i);
-                let w = (code % 2 === 0) ? 2 : 3;
-                ctx.fillRect(bx, 680, w, 35);
-                bx += w + 3;
-                ctx.fillRect(bx, 680, 1, 35);
-                bx += 3;
-            }
-            for (let i = 0; i < 20; i++) {
-                ctx.fillRect(bx, 680, (i % 2 === 0) ? 2 : 1, 35);
-                bx += 4;
+            // Draw QR Code on Canvas
+            let qrImgElement = document.querySelector('#receiptQrCodeContainer img');
+            if (qrImgElement && qrImgElement.complete) {
+                ctx.drawImage(qrImgElement, 255, 495, 90, 90);
             }
 
-            ctx.font = "9px 'Courier New', monospace";
-            ctx.fillText(recNo, canvas.width / 2, 730);
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 11px 'Inter', sans-serif";
+            ctx.fillText("SECURE DIGITAL QR RECEIPT", canvas.width / 2, 605);
+            
+            ctx.fillStyle = "#64748b";
+            ctx.font = "10px 'Inter', sans-serif";
+            ctx.fillText("Thank you for your payment. Verified through Portal System.", canvas.width / 2, 623);
 
             let link = document.createElement('a');
             link.download = `Fee_Receipt_${recNo}.png`;
@@ -947,15 +1126,235 @@
             link.click();
         }
 
-        function drawDashedLine(ctx, x1, y1, x2, y2) {
+        function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
             ctx.beginPath();
-            ctx.setLineDash([4, 4]);
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = "#94a3b8";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        // --- ADMIN FUNCTIONS ---
+        let sentRemindersMap = JSON.parse(localStorage.getItem('sentRemindersMap') || '{}');
+
+        function openAdminPinModal() {
+            document.getElementById('adminPinInput').value = '';
+            document.getElementById('adminPinError').classList.add('hidden');
+            document.getElementById('adminPinModal').classList.remove('hidden');
+        }
+
+        function closeAdminPinModal() {
+            document.getElementById('adminPinModal').classList.add('hidden');
+        }
+
+        function verifyAdminPin() {
+            let pin = document.getElementById('adminPinInput').value.trim();
+            if (pin === "1998") {
+                closeAdminPinModal();
+                openAdminDashboard();
+            } else {
+                let errEl = document.getElementById('adminPinError');
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        function openAdminDashboard() {
+            showScreen('screenAdminDashboard');
+            renderAdminAccountsList();
+            renderAdminRemindersList();
+            switchAdminTab('accounts');
+        }
+
+        function switchAdminTab(tab) {
+            let accBtn = document.getElementById('adminTabAccountsBtn');
+            let remBtn = document.getElementById('adminTabRemindersBtn');
+            let accSec = document.getElementById('adminAccountsSection');
+            let remSec = document.getElementById('adminRemindersSection');
+
+            if (tab === 'accounts') {
+                accBtn.className = "liquid-card rounded-2xl p-4 text-center space-y-2 border-2 border-indigo-600 bg-indigo-50/40 transition-all";
+                remBtn.className = "liquid-card rounded-2xl p-4 text-center space-y-2 border-2 border-transparent transition-all";
+                accSec.classList.remove('hidden');
+                remSec.classList.add('hidden');
+            } else {
+                remBtn.className = "liquid-card rounded-2xl p-4 text-center space-y-2 border-2 border-indigo-600 bg-indigo-50/40 transition-all";
+                accBtn.className = "liquid-card rounded-2xl p-4 text-center space-y-2 border-2 border-transparent transition-all";
+                remSec.classList.remove('hidden');
+                accSec.classList.add('hidden');
+            }
+        }
+
+        function renderAdminAccountsList() {
+            let students = Object.values(studentsDataMap);
+            document.getElementById('adminTotalStudentsCount').innerText = students.length;
+            let container = document.getElementById('adminStudentsListContainer');
+            container.innerHTML = '';
+
+            if (students.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No students found.</p>`;
+                return;
+            }
+
+            students.forEach(s => {
+                let div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 rounded-xl border bg-slate-50 border-slate-200 hover:border-indigo-300 transition-all cursor-pointer";
+                div.onclick = () => openStudentStatementModal(s);
+                div.innerHTML = `
+                    <div>
+                        <p class="text-xs font-bold text-slate-800">${s.name}</p>
+                        <p class="text-[9px] text-slate-500 font-medium">Class: ${s.class} | School: ${s.school}</p>
+                    </div>
+                    <button class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1.5 rounded-xl font-bold text-[10px] transition-all">
+                        Statement <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openStudentStatementModal(student) {
+            currentStatementStudent = student;
+            document.getElementById('statementStudentTitle').innerText = student.name;
+            document.getElementById('stModalName').innerText = student.name;
+            document.getElementById('stModalClass').innerText = student.class;
+            document.getElementById('stModalSchool').innerText = student.school;
+            document.getElementById('stModalFee').innerText = `₹${student.monthlyFee}`;
+            document.getElementById('stModalPhone').innerText = student.phone ? student.phone : 'Not Provided';
+
+            let transContainer = document.getElementById('stModalTransactionsList');
+            transContainer.innerHTML = '';
+
+            let studentRecords = submittedRecordsList.filter(r => r.studentName.toLowerCase() === student.name.toLowerCase());
+            let totalPaid = 0;
+
+            if (studentRecords.length === 0) {
+                transContainer.innerHTML = `<p class="text-[10px] text-slate-400 text-center py-2">No payment transactions recorded yet.</p>`;
+            } else {
+                studentRecords.forEach(r => {
+                    let amt = parseFloat(r.amount) || 0;
+                    totalPaid += amt;
+                    let readableTs = formatReadableTimestamp(r.timestamp.trim());
+                    let div = document.createElement('div');
+                    div.className = "flex justify-between text-[10px] border-b border-slate-100 pb-1";
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-slate-800">${r.months}</span>
+                            <p class="text-[9px] text-slate-500">Paid on: ${readableTs}</p>
+                        </div>
+                        <span class="font-bold text-emerald-600">₹${amt}</span>
+                    `;
+                    transContainer.appendChild(div);
+                });
+            }
+
+            document.getElementById('stModalTotalPaid').innerText = `₹${totalPaid}`;
+            document.getElementById('studentStatementModal').classList.remove('hidden');
+        }
+
+        function closeStatementModal() {
+            document.getElementById('studentStatementModal').classList.add('hidden');
+        }
+
+        function downloadStatementImage() {
+            let el = document.getElementById('statementCardContent');
+            html2canvas(el, { scale: 2 }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = `Statement_${currentStatementStudent.name.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function renderAdminRemindersList() {
+            let students = Object.values(studentsDataMap);
+            let container = document.getElementById('adminRemindersListContainer');
+            container.innerHTML = '';
+
+            let currentDate = new Date();
+            let currentMonthIdx = currentDate.getMonth();
+            let currentYearNum = currentDate.getFullYear();
+
+            let pendingListCount = 0;
+
+            students.forEach(s => {
+                let paidMonthsMap = new Map();
+                submittedRecordsList.forEach(rec => {
+                    if (rec.studentName.toLowerCase() === s.name.toLowerCase()) {
+                        let mList = rec.months.split(',').map(m => m.trim());
+                        mList.forEach(m => paidMonthsMap.set(m.toLowerCase(), true));
+                    }
+                });
+
+                let unpaidMonths = [];
+                let joinStr = s.joiningMonth.trim();
+                if (!joinStr.toLowerCase().includes('2026') && !joinStr.toLowerCase().includes('2027')) {
+                    joinStr += " 2026";
+                }
+                let joiningDateCheck = new Date(`1 ${joinStr}`);
+
+                SESSION_MONTHS.forEach(mObj => {
+                    let monthLabel = `${mObj.name} ${mObj.year}`;
+                    let monthLookupKey = mObj.name.toLowerCase();
+                    let mObjDateCheck = new Date(`${mObj.name} 1, ${mObj.year}`);
+                    let isBeforeJoining = mObjDateCheck < new Date(joiningDateCheck.getFullYear(), joiningDateCheck.getMonth(), 1);
+                    let isBeforeCurrentMonth = mObjDateCheck < new Date(currentYearNum, currentMonthIdx, 1);
+
+                    if (isBeforeJoining || !isBeforeCurrentMonth) return;
+
+                    let isPaid = paidMonthsMap.has(monthLookupKey) || paidMonthsMap.has(monthLabel.toLowerCase());
+                    if (!isPaid) {
+                        unpaidMonths.push(mObj.name);
+                    }
+                });
+
+                if (unpaidMonths.length > 0) {
+                    pendingListCount++;
+                    let totalDue = unpaidMonths.length * s.monthlyFee;
+                    let isAlreadySent = sentRemindersMap[s.name.toLowerCase()] || false;
+                    let phoneNum = s.phone ? s.phone.replace(/\D/g, '') : '';
+
+                    let div = document.createElement('div');
+                    div.className = "flex flex-col space-y-2 p-3 rounded-xl border bg-slate-50 border-slate-200";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">${s.name} <span class="text-[10px] text-slate-400 font-normal">(${s.phone || 'No Phone'})</span></p>
+                                <p class="text-[9px] text-slate-500 font-medium">Pending: ${unpaidMonths.join(', ')} | Total: ₹${totalDue}</p>
+                            </div>
+                            ${isAlreadySent ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[9px] font-bold">Sent</span>` : `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[9px] font-bold">Pending</span>`}
+                        </div>
+                        <button onclick="sendWhatsAppReminder('${s.name.replace(/'/g, "\\'")}', '${unpaidMonths.join(', ')}', ${totalDue}, '${phoneNum}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-brands fa-whatsapp text-sm"></i> Send WhatsApp Reminder to Mobile
+                        </button>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+
+            if (pendingListCount === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">All students are up to date on their fees!</p>`;
+            }
+        }
+
+        function sendWhatsAppReminder(studentName, pendingMonthsStr, totalDue, phoneNum) {
+            let messageText = `📌 *Fine Arts (Painting) – Fee Reminder*\n\nDear *${studentName.toUpperCase()}*,\n\n📅 *Pending:* ${pendingMonthsStr}\n💰 *Total Due:* *₹${totalDue}*\n\nPlease clear the pending fees through the portal:\n🔗 https://darpansukla.github.io/Monthly-Fee-Portal/\n\nThank you.\n*— Darpan Sukla*`;
+
+            sentRemindersMap[studentName.toLowerCase()] = true;
+            localStorage.setItem('sentRemindersMap', JSON.stringify(sentRemindersMap));
+
+            renderAdminRemindersList();
+
+            let encodedMsg = encodeURIComponent(messageText);
+            let whatsappUrl = phoneNum ? `https://wa.me/${phoneNum}?text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`;
+            window.open(whatsappUrl, '_blank');
         }
     </script>
 </body>
