@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <!-- QRCode Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Html2Canvas for Statement & Voucher Download -->
+    <!-- Html2Canvas for Statement Download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { 
@@ -479,23 +479,6 @@
                 <button onclick="downloadStatementImage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl text-xs transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-download"></i> Download Full Statement Image
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- HIDDEN WHATSAPP REMINDER QR IMAGE GENERATOR TEMPLATE -->
-    <div id="waQrImageTemplate" class="hidden fixed -left-[9999px] top-0 bg-white w-[380px] p-6 rounded-3xl border border-slate-100 text-center space-y-4 shadow-xl">
-        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">SCAN QR FROM GALLERY OR SECOND DEVICE</p>
-        <p class="text-3xl font-black text-indigo-600" id="waQrTemplateAmount">₹0</p>
-        
-        <div class="bg-white p-3 rounded-2xl border border-slate-200 inline-block shadow-sm">
-            <div id="waQrcode" class="flex justify-center items-center"></div>
-        </div>
-
-        <div class="space-y-1.5">
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">UPI REMARK GENERATED:</p>
-            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 inline-block w-full">
-                <span id="waQrTemplateRemark" class="receipt-font text-xs font-bold text-slate-800 break-all"></span>
             </div>
         </div>
     </div>
@@ -1325,7 +1308,7 @@
                             ${isAlreadySent ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[9px] font-bold">Sent</span>` : `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[9px] font-bold">Pending</span>`}
                         </div>
                         <button onclick="sendWhatsAppReminder('${s.name.replace(/'/g, "\\'")}', '${unpaidMonths.join(', ')}', ${totalDue}, '${phoneNum}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
-                            <i class="fa-brands fa-whatsapp text-sm"></i> Send WhatsApp Reminder & QR Image
+                            <i class="fa-brands fa-whatsapp text-sm"></i> Send WhatsApp Reminder
                         </button>
                     `;
                     container.appendChild(div);
@@ -1338,50 +1321,16 @@
         }
 
         function sendWhatsAppReminder(studentName, pendingMonthsStr, totalDue, phoneNum) {
-            let upiId = "sdarpan128@oksbi";
-            let payeeName = "Darpan Sukla";
-            let remark = `${studentName}[${pendingMonthsStr}]`;
-            let upiDeepLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${totalDue}&cu=INR&tn=${encodeURIComponent(remark)}`;
+            let messageText = `*Fine Arts (Painting) – Fee Reminder*\n\nDear Parents of *${studentName.toUpperCase()}*,\n\n*Pending Month:* ${pendingMonthsStr}\n*Total Due:* *₹${totalDue}*\n\nKindly clear the pending fee through the portal using the link below:\nhttps://darpansukla.github.io/Fees-Management-Portal/\n\nThank you for your cooperation.\n_— Darpan Sukla_`;
 
-            document.getElementById('waQrTemplateAmount').innerText = `₹${totalDue}`;
-            document.getElementById('waQrTemplateRemark').innerText = remark;
+            sentRemindersMap[studentName.toLowerCase()] = true;
+            localStorage.setItem('sentRemindersMap', JSON.stringify(sentRemindersMap));
 
-            let waQrContainer = document.getElementById('waQrcode');
-            waQrContainer.innerHTML = '';
-            new QRCode(waQrContainer, {
-                text: upiDeepLink,
-                width: 180,
-                height: 180,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            renderAdminRemindersList();
 
-            let templateEl = document.getElementById('waQrImageTemplate');
-            templateEl.classList.remove('hidden');
-
-            html2canvas(templateEl, { scale: 2 }).then(canvas => {
-                templateEl.classList.add('hidden');
-                
-                let link = document.createElement('a');
-                link.download = `Fee_Reminder_QR_${studentName.replace(/\s+/g, '_')}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-
-                let messageText = `Fine Arts (Painting) - Fee Reminder\n\nDear ${studentName.toUpperCase()},\n\nPending: ${pendingMonthsStr}\nTotal Due: ₹${totalDue}\n\nPlease clear the pending fees through the portal:\nhttps://darpansukla.github.io/Fees-Management-Portal/\n\nThank you.\n— Darpan Sukla`;
-
-                sentRemindersMap[studentName.toLowerCase()] = true;
-                localStorage.setItem('sentRemindersMap', JSON.stringify(sentRemindersMap));
-
-                renderAdminRemindersList();
-
-                let encodedMsg = encodeURIComponent(messageText);
-                let whatsappUrl = phoneNum ? `https://wa.me/${phoneNum}?text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`;
-                window.open(whatsappUrl, '_blank');
-            }).catch(err => {
-                templateEl.classList.add('hidden');
-                console.error("WhatsApp QR Generation Error:", err);
-            });
+            let encodedMsg = encodeURIComponent(messageText);
+            let whatsappUrl = phoneNum ? `https://wa.me/${phoneNum}?text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`;
+            window.open(whatsappUrl, '_blank');
         }
     </script>
 </body>
